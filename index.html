@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Aditya's Game Hub</title>
+<meta name="description" content="Small free browser games - tic-tac-toe with an unbeatable AI, and a colorful 2048-style number puzzle.">
+<meta property="og:title" content="Aditya's Game Hub">
+<meta property="og:description" content="Small free browser games - play instantly, no download needed.">
+<meta property="og:type" content="website">
+<meta name="theme-color" content="#8b5cf6">
+
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap');
+
+  *{ box-sizing:border-box; }
+
+  html, body{
+    margin:0; padding:0; min-height:100vh;
+    background: radial-gradient(circle at 8% 10%, rgba(139,92,246,.35), transparent 30%),
+                radial-gradient(circle at 92% 15%, rgba(236,72,153,.3), transparent 28%),
+                linear-gradient(135deg, #08051a, #12082e);
+    font-family: 'Space Mono', monospace;
+    color: #eef1f5;
+    display:flex; justify-content:center;
+  }
+
+  .wrap{
+    width:100%; max-width: 460px;
+    padding: 40px 18px 60px;
+  }
+
+  header{ text-align:center; margin-bottom: 28px; }
+
+  header h1{
+    font-size: 1.7rem;
+    margin: 0 0 6px;
+    letter-spacing: 0.5px;
+  }
+
+  header p{
+    color: #aaa7c7;
+    font-size: 0.8rem;
+    margin: 0;
+  }
+
+  .card{
+    display:flex; align-items:center; gap: 16px;
+    background: rgba(255,255,255,.06);
+    border: 1px solid rgba(255,255,255,.14);
+    border-radius: 16px;
+    padding: 16px;
+    margin-bottom: 16px;
+    text-decoration:none;
+    color: inherit;
+    transition: transform .15s ease, background .15s ease;
+  }
+
+  .card:active{ transform: scale(0.98); background: rgba(255,255,255,.1); }
+
+  .card-icon{
+    width: 56px; height: 56px;
+    border-radius: 14px;
+    display:flex; align-items:center; justify-content:center;
+    font-size: 1.6rem;
+    flex-shrink:0;
+  }
+
+  .icon-ttt{ background: linear-gradient(135deg, #6b4a35, #4a3225); }
+  .icon-puzzle{ background: linear-gradient(135deg, #8b5cf6, #ec4899, #06b6d4); }
+
+  .card-text h2{
+    font-size: 1rem;
+    margin: 0 0 4px;
+  }
+
+  .card-text p{
+    font-size: 0.72rem;
+    color: #aaa7c7;
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  .install-hint{
+    margin-top: 28px;
+    padding: 14px;
+    border-radius: 12px;
+    background: rgba(255,255,255,.05);
+    border: 1px dashed rgba(255,255,255,.2);
+    font-size: 0.7rem;
+    color: #aaa7c7;
+    text-align:center;
+    line-height: 1.5;
+  }
+
+  .install-btn{
+    display:none;
+    margin: 14px auto 0;
+    padding: 10px 20px;
+    border: 0;
+    border-radius: 10px;
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    color: #fff;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 0.75rem;
+    cursor: pointer;
+  }
+
+  footer{
+    text-align:center;
+    margin-top: 30px;
+    font-size: 0.65rem;
+    color: #6f6c8a;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>🎮 Aditya's Game Hub</h1>
+    <p>Small free browser games. Play instantly, no download.</p>
+  </header>
+
+  <a class="card" href="tic-tac-toe/">
+    <div class="card-icon icon-ttt">❌⭕</div>
+    <div class="card-text">
+      <h2>Tic-Tac-Toe</h2>
+      <p>Play against an unbeatable minimax AI. Sound, scoreboard, and share included.</p>
+    </div>
+  </a>
+
+  <a class="card" href="number-puzzle/">
+    <div class="card-icon icon-puzzle">🔢</div>
+    <div class="card-text">
+      <h2>Number Puzzle X</h2>
+      <p>Merge tiles, chase combos, beat your best score. Sound + share included.</p>
+    </div>
+  </a>
+
+  <div class="install-hint" id="installHint">
+    Add this page to your home screen to open it like an app - no app store needed.
+    <button class="install-btn" id="installBtn">Add to Home Screen</button>
+  </div>
+
+  <footer>Built by Aditya Lakeshri</footer>
+</div>
+
+<script>
+  // register the service worker so the hub (and its install prompt) works
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => { /* fine if this fails, site still works */ });
+    });
+  }
+
+  // show a real "install" button when the browser supports it (mainly Android Chrome)
+  let deferredPrompt = null;
+  const installBtn = document.getElementById('installBtn');
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    installBtn.style.display = 'inline-block';
+  });
+
+  installBtn.addEventListener('click', async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+    installBtn.style.display = 'none';
+  });
+</script>
+</body>
+</html>
